@@ -1,0 +1,423 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  FOLLOW
+  MESSAGE
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  VIOLENCE
+  NUDITY
+  MISINFORMATION
+  OTHER
+}
+
+// ============================================================
+// MODEL: User
+// ============================================================
+
+model User {
+  id            String        @id @default(cuid())
+  name          String
+  username      String        @unique
+  email         String        @unique
+  password      String?
+  role          Role          @default(USER)
+  status        AccountStatus @default(ACTIVE)
+  emailVerified DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  profile           Profile?
+  posts             Post[]
+  comments          Comment[]
+  replyComments     ReplyComment[]
+  likes             Like[]
+  savedPosts        SavedPost[]
+  sentMessages      Message[]        @relation("SentMessages")
+  chatRoomMembers   ChatRoomMember[]
+  notifications     Notification[]   @relation("ReceivedNotifications")
+  sentNotifications Notification[]   @relation("SentNotifications")
+  verificationCodes VerificationCode[]
+  reports           Report[]         @relation("ReportedByUser")
+  activityLogs      ActivityLog[]
+  sessions          Session[]
+  accounts          Account[]
+  following         Follow[]         @relation("Follower")
+  followers         Follow[]         @relation("Following")
+
+  @@map("users")
+}
+
+// ============================================================
+// MODEL: Profile
+// ============================================================
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  bio       String?  @db.Text
+  avatar    String?
+  cover     String?
+  website   String?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ============================================================
+// MODEL: Post
+// ============================================================
+
+model Post {
+  id          String   @id @default(cuid())
+  userId      String
+  caption     String?  @db.Text
+  isSensored  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media     Media[]
+  comments  Comment[]
+  likes     Like[]
+  saves     SavedPost[]
+  reports   Report[]
+
+  @@map("posts")
+}
+
+// ============================================================
+// MODEL: Media (foto/video pada post)
+// ============================================================
+
+model Media {
+  id         String    @id @default(cuid())
+  postId     String
+  url        String
+  publicId   String    // Cloudinary public_id
+  type       MediaType
+  width      Int?
+  height     Int?
+  duration   Float?    // durasi video dalam detik
+  order      Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("media")
+}
+
+// ============================================================
+// MODEL: Comment
+// ============================================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post    Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies ReplyComment[]
+
+  @@map("comments")
+}
+
+// ============================================================
+// MODEL: ReplyComment
+// ============================================================
+
+model ReplyComment {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reply_comments")
+}
+
+// ============================================================
+// MODEL: Like
+// ============================================================
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+
+// ============================================================
+// MODEL: SavedPost (Bookmark)
+// ============================================================
+
+model SavedPost {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("saved_posts")
+}
+
+// ============================================================
+// MODEL: Follow
+// ============================================================
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower",  fields: [followerId],  references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+// ============================================================
+// MODEL: Notification
+// ============================================================
+
+model Notification {
+  id         String           @id @default(cuid())
+  receiverId String
+  senderId   String?
+  type       NotificationType
+  message    String
+  postId     String?
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  receiver User  @relation("ReceivedNotifications", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User? @relation("SentNotifications",     fields: [senderId],   references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+}
+
+// ============================================================
+// MODEL: ChatRoom
+// ============================================================
+
+model ChatRoom {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ChatRoomMember[]
+  messages Message[]
+
+  @@map("chat_rooms")
+}
+
+// ============================================================
+// MODEL: ChatRoomMember
+// ============================================================
+
+model ChatRoomMember {
+  id         String   @id @default(cuid())
+  chatRoomId String
+  userId     String
+  joinedAt   DateTime @default(now())
+  lastReadAt DateTime @default(now())
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId],     references: [id], onDelete: Cascade)
+
+  @@unique([chatRoomId, userId])
+  @@map("chat_room_members")
+}
+
+// ============================================================
+// MODEL: Message
+// ============================================================
+
+model Message {
+  id         String   @id @default(cuid())
+  chatRoomId String
+  senderId   String
+  content    String?  @db.Text
+  mediaUrl   String?
+  mediaType  MediaType?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender   User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+// ============================================================
+// MODEL: VerificationCode (OTP)
+// ============================================================
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("verification_codes")
+}
+
+// ============================================================
+// MODEL: Report
+// ============================================================
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  postId      String
+  reason      ReportReason
+  description String?      @db.Text
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  reporter User @relation("ReportedByUser", fields: [reporterId], references: [id], onDelete: Cascade)
+  post     Post @relation(fields: [postId],     references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+// ============================================================
+// MODEL: ActivityLog
+// ============================================================
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("activity_logs")
+}
+
+// ============================================================
+// MODEL: Session (Auth.js)
+// ============================================================
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ============================================================
+// MODEL: Account (Auth.js — OAuth providers)
+// ============================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// ============================================================
+// MODEL: VerificationToken (Auth.js)
+// ============================================================
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}

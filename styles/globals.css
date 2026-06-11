@@ -1,0 +1,81 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #f5f5f5;
+    --card: #111111;
+    --card-border: #222222;
+    --muted: #888888;
+    --brand: #6c63ff;
+    --brand-hover: #5a4ff7;
+  }
+
+  * {
+    @apply border-dark-300;
+  }
+
+  body {
+    @apply bg-dark text-white antialiased;
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-dark-400 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-dark-500; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-xl
+           transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-95 min-h-[44px];
+  }
+
+  .btn-secondary {
+    @apply bg-dark-300 hover:bg-dark-400 text-white font-semibold px-4 py-2 rounded-xl
+           transition-all duration-200 active:scale-95 min-h-[44px];
+  }
+
+  .btn-outline {
+    @apply border border-dark-400 hover:bg-dark-200 text-white font-semibold px-4 py-2 rounded-xl
+           transition-all duration-200 active:scale-95 min-h-[44px];
+  }
+
+  .card {
+    @apply bg-dark-100 border border-dark-300 rounded-2xl;
+  }
+
+  .input-field {
+    @apply w-full bg-dark-200 border border-dark-400 text-white placeholder-dark-500
+           rounded-xl px-4 py-3 focus:outline-none focus:border-brand focus:ring-1
+           focus:ring-brand transition-colors duration-200;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white
+           hover:bg-dark-200 transition-all duration-200 font-medium cursor-pointer;
+  }
+
+  .sidebar-link.active {
+    @apply text-white bg-dark-200;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand to-purple-400 bg-clip-text text-transparent;
+  }
+
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(17, 17, 17, 0.8);
+  }
+}
