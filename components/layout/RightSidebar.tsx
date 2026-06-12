@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
-import { TrendingUp, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 export async function RightSidebar() {
   const session = await auth();
