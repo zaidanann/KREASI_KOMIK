@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma, Role, AccountStatus } from "@prisma/client";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,7 +18,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Tidak diizinkan." }, { status: 403 });
   }
 
-  const updateData: Partial<{ status: string; role: string }> = {};
+  const updateData: Prisma.UserUpdateInput = {};
 
   switch (action) {
     case "suspend": updateData.status = "SUSPENDED"; break;
