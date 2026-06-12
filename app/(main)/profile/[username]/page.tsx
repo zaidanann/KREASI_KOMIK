@@ -5,17 +5,19 @@ import { auth } from "@/lib/auth";
 import { ProfileHeader } from "@/features/profile/components/ProfileHeader";
 import { ProfileGrid } from "@/features/profile/components/ProfileGrid";
 
-interface Props { params: { username: string } }
+interface Props { params: Promise<{ username: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const user = await prisma.user.findUnique({ where: { username: params.username }, select: { name: true } });
-  return { title: user ? `${user.name} (@${params.username})` : "Profil" };
+  const { username } = await params;
+  const user = await prisma.user.findUnique({ where: { username }, select: { name: true } });
+  return { title: user ? `${user.name} (@${username})` : "Profil" };
 }
 
 export default async function ProfilePage({ params }: Props) {
+  const { username } = await params;
   const session = await auth();
   const user = await prisma.user.findUnique({
-    where: { username: params.username },
+    where: { username },
     include: {
       profile: true,
       _count: { select: { posts: true, followers: true, following: true } },
@@ -31,7 +33,7 @@ export default async function ProfilePage({ params }: Props) {
   return (
     <div className="max-w-xl mx-auto">
       <ProfileHeader user={user} isFollowing={isFollowing} isOwn={isOwn} />
-      <ProfileGrid username={params.username} />
+      <ProfileGrid username={username} />
     </div>
   );
 }
