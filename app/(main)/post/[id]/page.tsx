@@ -5,11 +5,12 @@ import { auth } from "@/lib/auth";
 import { PostPageClient } from "@/features/post/components/PostPageClient";
 import { APP_NAME } from "@/constants";
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
   const post = await prisma.post.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: { select: { name: true, username: true } },
       media: { take: 1, orderBy: { order: "asc" } },
@@ -35,10 +36,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PostPage({ params }: Props) {
+  const { id } = await params;
   const session = await auth();
 
   const post = await prisma.post.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: {
         select: {
