@@ -17,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Tidak diizinkan." }, { status: 403 });
   }
 
-  let updateData: any = {};
+  const updateData: Partial<{ status: string; role: string }> = {};
 
   switch (action) {
     case "suspend": updateData.status = "SUSPENDED"; break;
