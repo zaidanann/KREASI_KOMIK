@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { commentSchema } from "@/validators/post";
 import { PAGINATION } from "@/constants";
 
-// GET komentar sebuah post
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const cursor = searchParams.get("cursor");
 
   const comments = await prisma.comment.findMany({
-    where: { postId: params.id },
+    where: { postId: id },
     orderBy: { createdAt: "desc" },
     take: PAGINATION.COMMENT_LIMIT + 1,
     ...(cursor && { skip: 1, cursor: { id: cursor } }),
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ comments: items, nextCursor: hasMore ? items[items.length - 1].id : null });
 }
 
-// POST tambah komentar
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -38,15 +38,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
 
   const comment = await prisma.comment.create({
-    data: { postId: params.id, userId: session.user.id, content: parsed.data.content },
+    data: { postId: id, userId: session.user.id, content: parsed.data.content },
     include: {
       user: { select: { id: true, name: true, username: true, profile: { select: { avatar: true } } } },
       _count: { select: { replies: true } },
     },
   });
 
-  // Notifikasi pemilik post
-  const post = await prisma.post.findUnique({ where: { id: params.id }, select: { userId: true } });
+  const post = await prisma.post.findUnique({ where: { id }, select: { userId: true } });
   if (post && post.userId !== session.user.id) {
     await prisma.notification.create({
       data: {
@@ -54,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         senderId: session.user.id,
         type: "COMMENT",
         message: `${session.user.name} mengomentari postinganmu`,
-        postId: params.id,
+        postId: id,
       },
     });
   }

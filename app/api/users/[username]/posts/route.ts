@@ -3,14 +3,15 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PAGINATION } from "@/constants";
 
-export async function GET(req: NextRequest, { params }: { params: { username: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const cursor = searchParams.get("cursor");
 
-  const user = await prisma.user.findUnique({ where: { username: params.username }, select: { id: true } });
+  const user = await prisma.user.findUnique({ where: { username }, select: { id: true } });
   if (!user) return NextResponse.json({ error: "User tidak ditemukan." }, { status: 404 });
 
   const posts = await prisma.post.findMany({

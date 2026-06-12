@@ -3,13 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { commentSchema } from "@/validators/post";
 
-// GET replies
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const replies = await prisma.replyComment.findMany({
-    where: { commentId: params.id },
+    where: { commentId: id },
     orderBy: { createdAt: "asc" },
     include: {
       user: {
@@ -21,8 +21,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json(replies);
 }
 
-// POST add reply
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -33,11 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const reply = await prisma.replyComment.create({
-    data: {
-      commentId: params.id,
-      userId: session.user.id,
-      content: parsed.data.content,
-    },
+    data: { commentId: id, userId: session.user.id, content: parsed.data.content },
     include: {
       user: {
         select: { id: true, name: true, username: true, profile: { select: { avatar: true } } },
@@ -45,11 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     },
   });
 
-  // Notifikasi pemilik komentar
-  const comment = await prisma.comment.findUnique({
-    where: { id: params.id },
-    select: { userId: true },
-  });
+  const comment = await prisma.comment.findUnique({ where: { id }, select: { userId: true } });
   if (comment && comment.userId !== session.user.id) {
     await prisma.notification.create({
       data: {

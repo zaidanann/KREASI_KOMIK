@@ -3,14 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PAGINATION } from "@/constants";
 
-// GET pesan dalam room
-export async function GET(req: NextRequest, { params }: { params: { roomId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
+  const { roomId } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Pastikan user adalah member room
   const member = await prisma.chatRoomMember.findUnique({
-    where: { chatRoomId_userId: { chatRoomId: params.roomId, userId: session.user.id } },
+    where: { chatRoomId_userId: { chatRoomId: roomId, userId: session.user.id } },
   });
   if (!member) return NextResponse.json({ error: "Tidak diizinkan." }, { status: 403 });
 
@@ -18,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { roomId: stri
   const cursor = searchParams.get("cursor");
 
   const messages = await prisma.message.findMany({
-    where: { chatRoomId: params.roomId },
+    where: { chatRoomId: roomId },
     orderBy: { createdAt: "desc" },
     take: PAGINATION.CHAT_LIMIT + 1,
     ...(cursor && { skip: 1, cursor: { id: cursor } }),
@@ -29,9 +28,8 @@ export async function GET(req: NextRequest, { params }: { params: { roomId: stri
     },
   });
 
-  // Update lastReadAt
   await prisma.chatRoomMember.update({
-    where: { chatRoomId_userId: { chatRoomId: params.roomId, userId: session.user.id } },
+    where: { chatRoomId_userId: { chatRoomId: roomId, userId: session.user.id } },
     data: { lastReadAt: new Date() },
   });
 
@@ -39,18 +37,18 @@ export async function GET(req: NextRequest, { params }: { params: { roomId: stri
   const items = hasMore ? messages.slice(0, PAGINATION.CHAT_LIMIT) : messages;
 
   return NextResponse.json({
-    messages: items.reverse(), // urutkan dari lama ke baru
+    messages: items.reverse(),
     nextCursor: hasMore ? items[items.length - 1].id : null,
   });
 }
 
-// POST kirim pesan
-export async function POST(req: NextRequest, { params }: { params: { roomId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
+  const { roomId } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const member = await prisma.chatRoomMember.findUnique({
-    where: { chatRoomId_userId: { chatRoomId: params.roomId, userId: session.user.id } },
+    where: { chatRoomId_userId: { chatRoomId: roomId, userId: session.user.id } },
   });
   if (!member) return NextResponse.json({ error: "Tidak diizinkan." }, { status: 403 });
 
@@ -61,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: { roomId: str
 
   const message = await prisma.message.create({
     data: {
-      chatRoomId: params.roomId,
+      chatRoomId: roomId,
       senderId: session.user.id,
       content,
       mediaUrl,
@@ -74,15 +72,13 @@ export async function POST(req: NextRequest, { params }: { params: { roomId: str
     },
   });
 
-  // Update updatedAt room
   await prisma.chatRoom.update({
-    where: { id: params.roomId },
+    where: { id: roomId },
     data: { updatedAt: new Date() },
   });
 
-  // Notifikasi penerima
   const otherMembers = await prisma.chatRoomMember.findMany({
-    where: { chatRoomId: params.roomId, userId: { not: session.user.id } },
+    where: { chatRoomId: roomId, userId: { not: session.user.id } },
   });
   for (const m of otherMembers) {
     await prisma.notification.create({
