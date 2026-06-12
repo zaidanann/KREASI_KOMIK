@@ -3,7 +3,8 @@ import { ChatLayout } from "@/features/chat/components/ChatLayout";
 
 export const metadata: Metadata = { title: "Pesan" };
 
-export default function ChatPage({ params }: { params: { chatId?: string[] } }) {
-  const roomId = params.chatId?.[0] ?? null;
+export default async function ChatPage({ params }: { params: Promise<{ chatId?: string[] }> }) {
+  const { chatId } = await params;
+  const roomId = chatId?.[0] ?? null;
   return <ChatLayout activeRoomId={roomId} />;
 }
