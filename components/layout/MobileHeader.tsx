@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Bell, Zap } from "lucide-react";
 import { APP_NAME } from "@/constants";
 
-export function MobileHeader({ user }: { user: any }) {
+export function MobileHeader({ user: _user }: { user: unknown }) {
   return (
     <header className="lg:hidden sticky top-0 z-40 glass border-b border-dark-300 px-4 py-3 flex items-center justify-between">
       <Link href="/" className="flex items-center gap-2">

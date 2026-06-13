@@ -21,9 +21,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const updateData: Prisma.UserUpdateInput = {};
 
   switch (action) {
-    case "suspend": updateData.status = "SUSPENDED"; break;
-    case "ban":     updateData.status = "BANNED"; break;
-    case "unban":   updateData.status = "ACTIVE"; break;
+    case "suspend": updateData.status = AccountStatus.SUSPENDED;break;
+    case "ban":     updateData.status = AccountStatus.BANNED;break;
+    case "unban":   updateData.status = AccountStatus.ACTIVE; break;
     case "changeRole":
       if (session.user.role !== "SUPER_ADMIN") return NextResponse.json({ error: "Hanya super admin." }, { status: 403 });
       if (!["USER", "ADMIN", "SUPER_ADMIN"].includes(role)) return NextResponse.json({ error: "Role tidak valid." }, { status: 400 });

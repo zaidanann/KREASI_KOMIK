@@ -11,7 +11,8 @@ const loginSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prisma) as any,
   session: { strategy: "jwt" },
   secret: process.env.AUTH_SECRET,
   pages: {
@@ -56,20 +57,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.id = user.id;
-        const extendedUser = user as typeof user & { username: string; role: string };
-        token.username = extendedUser.username;
-        token.role = extendedUser.role;
+        token.username = user.username;
+        token.role = user.role;
       }
       return token;
     },
-    async session({ session, token }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: { session: any; token: any }) {
       if (token) {
-        session.user.id = token.id as string;
-        session.user.username = token.username as string;
-        session.user.role = token.role as string;
+        session.user.id = token.id;
+        session.user.username = token.username;
+        session.user.role = token.role;
       }
       return session;
     },
