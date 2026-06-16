@@ -79,6 +79,7 @@ model User {
   chatRoomMembers   ChatRoomMember[]
   notifications     Notification[]   @relation("ReceivedNotifications")
   sentNotifications Notification[]   @relation("SentNotifications")
+  pushSubscriptions PushSubscription[]
   verificationCodes VerificationCode[]
   reports           Report[]         @relation("ReportedByUser")
   activityLogs      ActivityLog[]
@@ -407,6 +408,23 @@ model Account {
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
+}
+
+// ============================================================
+// MODEL: PushSubscription (Web Push)
+// ============================================================
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
 }
 
 // ============================================================

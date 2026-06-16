@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { commentSchema } from "@/validators/post";
 import { PAGINATION } from "@/constants";
+import { triggerPushToUser } from "@/lib/triggerPush";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -55,6 +56,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         message: `${session.user.name} mengomentari postinganmu`,
         postId: id,
       },
+    });
+    // Kirim Web Push
+    triggerPushToUser(post.userId, {
+      title: "💬 JOTENG",
+      body: `${session.user.name} mengomentari postinganmu`,
+      url: `/post/${id}`,
+      tag: `comment-${id}`,
     });
   }
 

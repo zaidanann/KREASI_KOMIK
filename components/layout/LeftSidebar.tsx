@@ -10,6 +10,9 @@ import {
 import { cn } from "@/utils/cn";
 import { Avatar } from "@/components/ui/Avatar";
 import { APP_NAME } from "@/constants";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { POLLING_INTERVAL } from "@/constants";
 
 interface LeftSidebarProps {
   user: { id: string; name: string; username: string; image?: string | null };
@@ -27,6 +30,16 @@ const navItems = [
 
 export function LeftSidebar({ user }: LeftSidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const { data: notifData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => fetch("/api/notifications").then((r) => r.json()),
+    refetchInterval: POLLING_INTERVAL,
+    enabled: !!session,
+  });
+
+  const unreadCount: number = notifData?.unreadCount ?? 0;
 
   return (
     <div className="flex flex-col h-full px-2">
@@ -43,7 +56,11 @@ export function LeftSidebar({ user }: LeftSidebarProps) {
             <Link key={href} href={href} className={cn("sidebar-link", isActive && "active")}>
               <Icon className={cn("w-5 h-5 shrink-0", isActive && "text-brand")} />
               <span className={cn(isActive && "text-white font-semibold")}>{label}</span>
-              {label === "Notifikasi" && <span className="ml-auto w-2 h-2 bg-brand rounded-full" />}
+              {label === "Notifikasi" && unreadCount > 0 && (
+                <span className="ml-auto min-w-[18px] h-[18px] px-1 bg-brand rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

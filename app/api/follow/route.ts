@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { triggerPushToUser } from "@/lib/triggerPush";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -33,6 +34,13 @@ export async function POST(req: NextRequest) {
         type: "FOLLOW",
         message: `${session.user.name} mulai mengikutimu`,
       },
+    });
+    // Kirim Web Push
+    triggerPushToUser(targetUserId, {
+      title: "👤 JOTENG",
+      body: `${session.user.name} mulai mengikutimu`,
+      url: `/profile/${session.user.username}`,
+      tag: `follow-${followerId}`,
     });
 
     const count = await prisma.follow.count({ where: { followingId: targetUserId } });

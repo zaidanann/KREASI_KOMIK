@@ -2,25 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, PlusSquare, MessageCircle } from "lucide-react";
+import { Home, Search, PlusSquare, MessageCircle, Bell } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { POLLING_INTERVAL } from "@/constants";
 
 const navItems = [
-  { href: "/",        icon: Home,         label: "Beranda" },
-  { href: "/explore", icon: Search,       label: "Jelajahi" },
-  { href: "/create",  icon: PlusSquare,   label: "Buat",   isPrimary: true },
-  { href: "/chat",    icon: MessageCircle,label: "Pesan" },
+  { href: "/",              icon: Home,          label: "Beranda" },
+  { href: "/explore",       icon: Search,        label: "Jelajahi" },
+  { href: "/create",        icon: PlusSquare,    label: "Buat",   isPrimary: true },
+  { href: "/notifications", icon: Bell,          label: "Notif",  isBell: true },
+  { href: "/chat",          icon: MessageCircle, label: "Pesan" },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
+  const { data: notifData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => fetch("/api/notifications").then((r) => r.json()),
+    refetchInterval: POLLING_INTERVAL,
+    enabled: !!session,
+  });
+
+  const unreadCount: number = notifData?.unreadCount ?? 0;
+
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass border-t border-dark-300">
       <div className="flex items-center justify-around px-2 py-2">
-        {navItems.map(({ href, icon: Icon, label, isPrimary }) => {
+        {navItems.map(({ href, icon: Icon, label, isPrimary, isBell }) => {
           const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link
@@ -35,7 +47,15 @@ export function BottomNav() {
                   : "text-gray-500"
               )}
             >
-              <Icon className={cn("w-5 h-5", isPrimary && "text-white")} />
+              {/* Bell icon dengan badge */}
+              <div className="relative">
+                <Icon className={cn("w-5 h-5", isPrimary && "text-white")} />
+                {isBell && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 bg-brand rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </div>
               {!isPrimary && <span className="text-[10px] font-medium">{label}</span>}
             </Link>
           );
