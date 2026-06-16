@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PAGINATION } from "@/constants";
+import { triggerPushToUser } from "@/lib/triggerPush";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = await params;
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   const otherMembers = await prisma.chatRoomMember.findMany({
     where: { chatRoomId: roomId, userId: { not: session.user.id } },
   });
+
   for (const m of otherMembers) {
     await prisma.notification.create({
       data: {
@@ -88,6 +90,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
         type: "MESSAGE",
         message: `${session.user.name} mengirim pesan`,
       },
+    });
+    // Kirim Web Push
+    triggerPushToUser(m.userId, {
+      title: "💬 KREASI",
+      body: `${session.user.name}: ${content?.slice(0, 50) || "mengirim media"}`,
+      url: `/chat/${roomId}`,
+      tag: `message-${roomId}`,
     });
   }
 
