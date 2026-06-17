@@ -1,13 +1,13 @@
 {
-  "name": "KREASI",
-  "short_name": "KREASI",
+  "name": "JOTENG",
+  "short_name": "JOTENG",
   "description": "Platform Sosial Media Modern",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#6c63ff",
+  "background_color": "#050a05",
+  "theme_color": "#22c55e",
   "icons": [
-    { "src": "/icons,images/Komik.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icons,images/Komik.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/images/Komik.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/images/Komik.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

@@ -15,7 +15,7 @@ export function ActivityLogClient() {
     <div className="space-y-5 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold">Log Aktivitas</h1>
-        <p className="text-gray-500 text-sm mt-1">Semua aktivitas admin di platform JOTENG</p>
+        <p className="text-gray-500 text-sm mt-1">Semua aktivitas admin di platform KREASI</p>
       </div>
 
       {isLoading ? (

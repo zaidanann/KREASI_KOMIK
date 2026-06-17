@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Daftar",
-  description: "Buat akun JOTENG baru",
+  description: "Buat akun KREASI baru",
 };
 
 export default function RegisterPage() {

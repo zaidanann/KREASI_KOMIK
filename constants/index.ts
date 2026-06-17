@@ -1,4 +1,4 @@
-export const APP_NAME = "JOTENG";
+export const APP_NAME = "KREASI";
 export const APP_DESCRIPTION = "Platform Sosial Media Modern — Berbagi Momen, Terhubung Bersama";
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 

@@ -56,7 +56,7 @@ export async function RightSidebar() {
 
       {/* Footer */}
       <p className="text-xs text-gray-600 px-2">
-        © 2025 JOTENG · Dibuat dengan ❤️
+        © 2025 KREASI · 
       </p>
     </div>
   );

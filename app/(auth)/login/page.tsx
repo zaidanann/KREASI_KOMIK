@@ -3,7 +3,7 @@ import { LoginForm } from "@/features/auth/components/LoginForm";
 
 export const metadata: Metadata = {
   title: "Masuk",
-  description: "Masuk ke akun JOTENG kamu",
+  description: "Masuk ke akun KREASI kamu",
 };
 
 export default function LoginPage() {

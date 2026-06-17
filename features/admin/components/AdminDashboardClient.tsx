@@ -72,7 +72,7 @@ export function AdminDashboardClient() {
     <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold">Dashboard Admin</h1>
-        <p className="text-gray-500 text-sm mt-1">Ringkasan statistik platform JOTENG</p>
+        <p className="text-gray-500 text-sm mt-1">Ringkasan statistik platform KREASI</p>
       </div>
 
       {/* Stats Grid */}

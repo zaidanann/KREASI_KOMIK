@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return { title: "Post tidak ditemukan" };
 
   const title = `${post.user.name} di ${APP_NAME}`;
-  const description = post.caption?.slice(0, 160) ?? "Lihat postingan ini di JOTENG";
+  const description = post.caption?.slice(0, 160) ?? "Lihat postingan ini di KREASI";
   const image = post.media[0]?.url;
 
   return {
